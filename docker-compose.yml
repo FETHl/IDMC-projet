@@ -32,7 +32,7 @@ services:
     networks:
       - spark-network
 
-  Projet-Meryem-Fethi:
+  namenode:
     image: cjj2010/hadoop:3.3.6
     ports: 
       - "9870:9870"  # Interface Web HDFS
@@ -47,7 +47,7 @@ services:
     image: cjj2010/hadoop:3.3.6
     hostname: datanode1
     depends_on: 
-      - Projet-Meryem-Fethi
+      - namenode
     command: >
       bash -c "hdfs datanode & yarn nodemanager"
     ports:
@@ -59,7 +59,7 @@ services:
     image: cjj2010/hadoop:3.3.6
     hostname: datanode2
     depends_on: 
-      - Projet-Meryem-Fethi
+      - namenode
     command: >
       bash -c "hdfs datanode & yarn nodemanager"
     ports:
@@ -71,7 +71,7 @@ services:
     image: cjj2010/hadoop:3.3.6
     hostname: datanode3
     depends_on: 
-      - Projet-Meryem-Fethi
+      - namenode
     command: >
       bash -c "hdfs datanode & yarn nodemanager"
     ports:
@@ -83,7 +83,7 @@ services:
     image: cjj2010/hadoop:3.3.6
     hostname: datanode4
     depends_on: 
-      - Projet-Meryem-Fethi
+      - namenode
     command: >
       bash -c "hdfs datanode & yarn nodemanager"
     ports:
