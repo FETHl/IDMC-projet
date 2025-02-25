@@ -1,0 +1,164 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - spark-network
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - spark-network
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./mongo-data:/data/db
+    networks:
+      - spark-network
+
+  namenode:
+    image: cjj2010/hadoop:3.3.6
+    ports: 
+      - "9870:9870"  # Interface Web HDFS
+      - "8088:8088"  # Interface Web ResourceManager
+    command: > 
+      bash -c "hdfs namenode & yarn resourcemanager"
+    hostname: hdfs-namenode
+    networks:
+      - hadoop-spark-network
+
+  datanode1:
+    image: cjj2010/hadoop:3.3.6
+    hostname: datanode1
+    depends_on: 
+      - namenode
+    command: >
+      bash -c "hdfs datanode & yarn nodemanager"
+    ports:
+      - "9864:9864"
+    networks:
+      - hadoop-spark-network
+
+  datanode2:
+    image: cjj2010/hadoop:3.3.6
+    hostname: datanode2
+    depends_on: 
+      - namenode
+    command: >
+      bash -c "hdfs datanode & yarn nodemanager"
+    ports:
+      - "9865:9865"
+    networks:
+      - hadoop-spark-network
+  
+  datanode3:
+    image: cjj2010/hadoop:3.3.6
+    hostname: datanode3
+    depends_on: 
+      - namenode
+    command: >
+      bash -c "hdfs datanode & yarn nodemanager"
+    ports:
+      - "9866:9866"
+    networks:
+      - hadoop-spark-network
+
+  datanode4:
+    image: cjj2010/hadoop:3.3.6
+    hostname: datanode4
+    depends_on: 
+      - namenode
+    command: >
+      bash -c "hdfs datanode & yarn nodemanager"
+    ports:
+      - "9867:9867"
+    networks:
+      - hadoop-spark-network
+
+  secondarynamenode:
+    image: cjj2010/hadoop:3.3.6
+    command: hdfs secondarynamenode
+    ports:
+      - "9868:9868"
+    networks:
+      - hadoop-spark-network
+
+  spark-master:
+    image: apache-spark:3.4.0
+    container_name: spark-master
+    ports:
+      - "8080:8080" # Web UI Master
+      - "7077:7077" # Spark Master Port
+      - "9999:9999" # Port for socket Data
+    environment:
+      - SPARK_LOCAL_IP=spark-master
+      - SPARK_WORKLOAD=master
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+    networks:
+      - hadoop-spark-network
+
+  spark-worker-a:
+    image: apache-spark:3.4.0
+    container_name: spark-worker-a
+    ports:
+      - "8081:8081" # Web UI Worker
+      - "7000:7000" # Spark Worker Port
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-a
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_EXECUTOR_MEMORY=1G
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+    networks:
+      - hadoop-spark-network
+
+  spark-worker-b:
+    image: apache-spark:3.4.0
+    container_name: spark-worker-b
+    ports:
+      - "8082:8082" # Web UI Worker
+      - "7001:7001" # Spark Worker Port
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-b
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_EXECUTOR_MEMORY=1G
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+    networks:
+      - hadoop-spark-network
+
+networks:
+  spark-network:
+    driver: bridge
+  hadoop-spark-network:
+    driver: bridge
